@@ -54,7 +54,7 @@ Resources:
   VPC:
     Type: 'AWS::CloudFormation::Stack'
     Properties:
-      TemplateURL: !Sub '${CfnStacksTemplates}/snapshot/com/cfnstacks/cfn-public-only-vpc/0.0.12-SNAPSHOT/public-only-vpc.yaml'
+      TemplateURL: !Sub '${CfnStacksTemplates}/release/com/cfnstacks/cfn-public-only-vpc/0.0.11/public-only-vpc.yaml'
       TimeoutInMinutes: 15
       Parameters:
         AvailabilityZones: !Ref AvailabilityZones
