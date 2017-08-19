@@ -1,0 +1,6 @@
+language: java
+install: echo "skip 'gradle assemble' step"
+script: ./gradlew publish
+branches:
+  only:
+  - master
