@@ -1,0 +1,34 @@
+= Cfn-Stacks Application Example
+v{projectVersion}
+
+== Overview
+
+This example demonstrates how to deploy and document an app using templates from https://cfn-stacks.com
+
+=== Prerequisite
+
+* http://www.oracle.com/technetwork/pt/java/javase/downloads/index.html[Java 8 JDK^]: Download from Oracle or
+    use a packaged version for your OS
+
+== Tool Links
+
+* http://asciidoctor.org/[Asciidoctor^]
+* https://aws.amazon.com/cloudformation/[CloudFormation^]
+* https://git-scm.com/[Git^]
+* https://gradle.org/[Gradle^]
+
+== Documentation Links
+
+ifdef::backend-html5[]
+=== icon:file-code-o[] https://cfn-stacks.com/docs/latest[Web^]
+=== icon:file-pdf-o[] pass:[<a href="./app-example.pdf" target="_blank">PDF</a>]
+=== icon:git[] https://github.com/cfn-stacks/app-example[Source^]
+endif::backend-html5[]
+ifdef::backend-pdf[]
+=== https://cfn-stacks.com/docs/latest[Web^]
+=== https://github.com/cfn-stacks/app-example[Source^]
+endif::backend-pdf[]
+
+== Version
+
+This documentation was generated for version {projectVersion}

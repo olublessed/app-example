@@ -1,0 +1,86 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Application Example
+
+Parameters:
+
+  AvailabilityZones:
+    Description: >-
+      List of Availability Zones to use for the subnets in the VPC
+    Type: String
+
+  VPCCIDR:
+    AllowedPattern: >-
+      ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+    Default: 10.0.0.0/16
+    Description: CIDR block for the VPC
+    Type: String
+
+  PublicSubnet1CIDR:
+    AllowedPattern: >-
+      ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+    Default: 10.0.128.0/20
+    Description: CIDR block for the public DMZ subnet 1 located in Availability Zone 1
+    Type: String
+
+  PublicSubnet2CIDR:
+    AllowedPattern: >-
+      ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+    Default: 10.0.144.0/20
+    Description: CIDR block for the public DMZ subnet 2 located in Availability Zone 2
+    Type: String
+
+  CfnStacksTemplates:
+    Description: Template service base URL
+    Type: String
+    Default: 'https://s3.us-east-2.amazonaws.com/cfn-stacks.com/templates'
+
+  CreateInstance:
+    Description: Should an EC2 instance be created within the VPC?
+    Type: String
+    Default: false
+    AllowedValues:
+      - true
+      - false
+
+Conditions:
+
+  CreateInstance: !Equals [ 'true', !Ref CreateInstance ]
+
+Resources:
+
+  VPC:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: !Sub '${CfnStacksTemplates}/snapshot/com/cfnstacks/cfn-public-only-vpc/0.0.12-SNAPSHOT/public-only-vpc.yaml'
+      TimeoutInMinutes: 15
+      Parameters:
+        AvailabilityZones: !Ref AvailabilityZones
+        VPCCIDR: !Ref VPCCIDR
+        PublicSubnet1CIDR: !Ref PublicSubnet1CIDR
+        PublicSubnet2CIDR: !Ref PublicSubnet2CIDR
+
+  App:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: !Sub '${CfnStacksTemplates}/snapshot/com/cfnstacks/app-example/0.0.1-SNAPSHOT/app.yaml'
+      TimeoutInMinutes: 15
+      Parameters:
+        InstanceSubnetID: !If [ CreateInstance, !GetAtt VPC.Outputs.PublicSubnet1ID , !Ref 'AWS::NoValue' ]
+
+Outputs:
+  CfnStacksId:
+    Description: cfn-stacks.com artifact id
+    Value: @artifactId@
+  CfnStacksVersion:
+    Description: cfn-stacks.com artifact version
+    Value: v@version@
+  VpcID:
+    Description: VPC ID
+    Value: !Ref VPC
+  InstanceID:
+    Condition: CreateInstance
+    Description: EC2 instance ID
+    Value: !GetAtt App.Outputs.InstanceID

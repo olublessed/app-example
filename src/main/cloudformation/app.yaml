@@ -1,0 +1,71 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Application Example
+
+Parameters:
+
+  InstanceSubnetID:
+    Description: Subnet ID in which to build the instance. Empty string will prevent launch
+    Type: String
+    Default: ''
+
+Conditions:
+
+  CreateInstance: !Not [ !Equals [ '', !Ref InstanceSubnetID ] ]
+
+Resources:
+
+  Instance:
+    Type: 'AWS::EC2::Instance'
+    Condition: CreateInstance
+    Properties:
+      InstanceType: 't2.nano'
+      ImageId: !FindInMap [ AWSAMIRegionMap, !Ref 'AWS::Region', AMZNLINUXHVM ]
+      SubnetId: !Ref InstanceSubnetID
+
+Mappings:
+
+  AWSAMIRegionMap:
+    AMI:
+      AMZNLINUXHVM: amzn-ami-hvm-2017.03.1.20170623-x86_64-gp2
+    ap-northeast-1:
+      AMZNLINUXHVM: ami-3bd3c45c
+    ap-northeast-2:
+      AMZNLINUXHVM: ami-e21cc38c
+    ap-south-1:
+      AMZNLINUXHVM: ami-47205e28
+    ap-southeast-1:
+      AMZNLINUXHVM: ami-77af2014
+    ap-southeast-2:
+      AMZNLINUXHVM: ami-10918173
+    ca-central-1:
+      AMZNLINUXHVM: ami-a7aa15c3
+    eu-central-1:
+      AMZNLINUXHVM: ami-82be18ed
+    eu-west-1:
+      AMZNLINUXHVM: ami-d7b9a2b1
+    eu-west-2:
+      AMZNLINUXHVM: ami-ed100689
+    sa-east-1:
+      AMZNLINUXHVM: ami-87dab1eb
+    us-east-1:
+      AMZNLINUXHVM: ami-a4c7edb2
+    us-east-2:
+      AMZNLINUXHVM: ami-8a7859ef
+    us-gov-west-1:
+      AMZNLINUXHVM: ami-ffa61d9e
+    us-west-1:
+      AMZNLINUXHVM: ami-327f5352
+    us-west-2:
+      AMZNLINUXHVM: ami-6df1e514
+
+Outputs:
+  CfnStacksId:
+    Description: cfn-stacks.com artifact id
+    Value: @artifactId@
+  CfnStacksVersion:
+    Description: cfn-stacks.com artifact version
+    Value: v@version@
+  InstanceID:
+    Condition: CreateInstance
+    Description: EC2 instance ID
+    Value: !Ref Instance
