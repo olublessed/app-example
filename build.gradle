@@ -8,41 +8,39 @@ plugins {
 group = 'com.cfnstacks'
 description = 'Application Example'
 
-ext {
-    // Chance to override default build/deploy/publish settings with command line params
-    // Example: ./gradlew updateStack -Pprofile=my-aws-cli-profile -Pstack=test-stack
-    params = [
-            failure : (hasProperty('failure')) ? group : 'ROLLBACK', // DO_NOTHING | ROLLBACK | DELETE
-            group   : (hasProperty('group')) ? group : 'com.cfnstacks',
-            params  : (hasProperty('params')) ? params : 'appAndVpc',
-            profile : (hasProperty('profile')) ? profile : '',
-            region  : (hasProperty('region')) ? region : 'us-east-2',
-            repo    : (hasProperty('repo')) ? repo : 'cfn-stacks.com.s3.us-east-2.amazonaws.com',
-            stack   : (hasProperty('stack')) ? stack : 'app-example',
-            template: (hasProperty('template')) ? template : 'app-main.yaml',
-            // Commonly used project params above. Project specific params below
-            subnet  : (hasProperty('subnet')) ? subnet : '',
-            instance: (hasProperty('instance')) ? instance : 'false'
-    ]
-
-    // Parameters passed into CloudFormation stack
-    // If there are more than one templates in the main/cloudformation directory you can have multiple named sets of params
-    stackParameters = [
-            appAndVpc: [ // Use -Pinstance=true or a local-config file setting to launch an ec2 instance in the VPC
-                         AvailabilityZones: 'us-east-2a,us-east-2b',
-                         CreateInstance: params.instance
-            ],
-            appOnly: [  // Use -Ptemplate=app.yaml -Pparams=appOnly -Psubnet=SUBNET_ID param to pass in a subnet ID
-                        InstanceSubnetID: params.subnet
-            ]
-    ]
-}
-
 // The local-config.groovy file has been .gitignore'd and allows you to locally override params
 // in a file instead of having to pass CLI params and without having to change this file
-if(project.file('local-config.groovy').exists()) {
-    apply from: 'local-config.groovy'
+ext.params = [:]
+if(project.file('local-config.groovy').exists()) { apply from: 'local-config.groovy' }
+def setParam(name, defaultValue) { (hasProperty(name)) ? property(name) : (params[name]) ? params[name] :defaultValue }
+
+// A spot to override default build/deploy/publish settings with command line params
+// Example: ./gradlew updateStack -Pprofile=my-aws-cli-profile -Pstack=test-stack
+ext.params.with {
+    failure = setParam('failure', 'ROLLBACK') // DO_NOTHING | ROLLBACK | DELETE
+    group = setParam('group', 'com.cfnstacks')
+    stackParamSet = setParam('stackParamSet', 'appAndVpc')
+    profile = setParam('profile', '')
+    region = setParam('region', 'us-east-2')
+    repo = setParam('repo', 'cfn-stacks.com.s3.us-east-2.amazonaws.com')
+    stack = setParam('stack', 'app-example')
+    template = setParam('template', 'app-main.yaml')
+    // Commonly used project params above. Project specific params below
+    subnet = setParam('subnet', '')
+    instance = setParam('instance', false)
 }
+
+// Parameters passed into CloudFormation stack
+// If there are more than one templates in the main/cloudformation directory you can have multiple named sets of params
+ext.stackParameters = [
+    appAndVpc: [ // Use -Pinstance=true or a local-config file setting to launch an ec2 instance in the VPC
+        AvailabilityZones: 'us-east-2a,us-east-2b',
+        CreateInstance: params.instance
+    ],
+    appOnly: [  // Use -Ptemplate=app.yaml -Pparams=appOnly -Psubnet=SUBNET_ID param to pass in a subnet ID
+        InstanceSubnetID: params.subnet
+    ]
+]
 
 // Config block for the ArtifactS3 plugin
 artifacts3 {
@@ -63,7 +61,7 @@ cloudFormation {
     stackName = params.stack
     capabilityIam true
     onFailure params.failure
-    conventionMapping.stackParams = { return stackParams = stackParameters[params.params] }
+    conventionMapping.stackParams = { project.ext.stackParameters[project.ext.params.stackParamSet] }
 }
 
 // Config block for the Asciidoctor Plugin
