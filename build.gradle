@@ -59,7 +59,7 @@ aws {
 cloudFormation {
     templateFile = project.file("build/cloudformation/${params.template}")
     stackName = params.stack
-    capabilityIam true
+    capabilityIam false
     onFailure params.failure
     conventionMapping.stackParams = { project.ext.stackParameters[project.ext.params.stackParamSet] }
 }
