@@ -135,6 +135,10 @@ and run the command listed in the [deployment docs](https://cfn-stacks.com/docs/
     do this you'll need to fork or copy and update the example-app repo as you won't have the rights needed to push updates.
 1. The process to cut a release involves checking in and pushing any outstanding changes and then using the `./gradlew release -Pprofile=YOUR_PROFILE_NAME` 
     command to perform the [steps to cut a release](https://cfn-stacks.com/docs/artifacts3-plugin/latest/index.html#release)
+1. The release task automatically triggers the publish task so shortly after the release has completed the templates will 
+    be available from the release/ key prefix within the S3 bucket which you can then make available to others for use in 
+    their templates. *Note:* The default settings of the artifacts3-repo is to delete snapshots after 30 days. This can be 
+    disabled or changed to another setting but the idea of a snapshot is that it's just for development use.
 
 ### Demo Wrap-Up
 
