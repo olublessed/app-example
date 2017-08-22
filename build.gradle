@@ -37,7 +37,7 @@ ext.stackParameters = [
         AvailabilityZones: 'us-east-2a,us-east-2b',
         CreateInstance: params.instance
     ],
-    appOnly: [  // Use -Ptemplate=app.yaml -Pparams=appOnly -Psubnet=SUBNET_ID param to pass in a subnet ID
+    appOnly: [  // Use -Ptemplate=app.yaml -stackParamSet=appOnly -Psubnet=SUBNET_ID param to pass in a subnet ID
         InstanceSubnetID: params.subnet
     ]
 ]
