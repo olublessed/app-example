@@ -27,7 +27,7 @@ The project is preconfigured to use the latest version of the ArtifactS3 Gradle 
 a workflow for authoring and publishing CloudFormation template components. A [full listing of tasks](https://cfn-stacks.com/docs/artifacts3-plugin/latest/index.html#plugin-tasks) 
 describes the available features.
 
-### 5 Minute Demo
+### 15 Minute Demo
 
 * If you have access to an AWS account with full administrative privileges you can create a stack containing a VPC and 
     optionally an EC2 instance
@@ -101,11 +101,44 @@ the needed subnet ID parameter.
         of the instance.
 1. Once completed with this test run the `./gradlew deleteStack -Pprofile=AWS_PROFILE_NAME` to terminate all resources 
     prevent the accumulation of charges.
-    
+
+#### Create a Private Template Repo
+
+1. We've already taken care of the prerequisite steps needed to deploy an ArtifactS3 template repository. Clone the project
+and run the command listed in the [deployment docs](https://cfn-stacks.com/docs/artifacts3-repo/latest/index.html#deployment)
+ (from the artifacts3-repo directory) `./gradlew updateStack -Pprofile=YOUR_PROFILE_NAME -Pstack=STACK_NAME -PDomainName=UNIQUE_S3_BUCKET_NAME` 
+1. Once the stack reaches the CREATE_COMPLETE status you'll be able to reference the fully qualified bucket name as your repo
+1. At this point you and your account administrator will be the only people able to access templates within the bucket but
+    you can later [expand access](http://docs.aws.amazon.com/AmazonS3/latest/dev/example-policies-s3.html) as needed.
+
+#### Publish a Component to a Repo
+
+1. If you've already created a local-config.groovy file add a repo key with a value of the fully qualified bucket name backing 
+    the repo we just created `bucket = 'UNIQUE_S3_BUCKET_NAME.s3.us-east-2.amazonaws.com'` there is also a region component in the 
+    name that might need adjusting if you're working in a region other than us-east-2. You can also provide the value as a 
+    command line param -Prepo=UNIQUE_S3_BUCKET_NAME.s3.us-east-2.amazonaws.com
+1. You can use the example-app as is for this test but you're really want to make a copy, remove the .git folder, update 
+    the project name in settings.gradle and the group name in build.gradle before reinitializing git to create a component 
+    of your own. Once you publish you'll notice that the namespace and version are preserved in the artifact key name which 
+    is why you'll want to update to your own settings. Example publishing command: `./gradlew publish -Pprofile=YOUR_PROFILE_NAME -Prepo=UNIQUE_S3_BUCKET_NAME.s3.us-east-2.amazonaws.com`
+1. If you look in the S3 bucket shortly thereafter you'd see snapshot and templates keys with the snapshot containing a jar
+    file containing the templates with the rest of the keyname preserving the namespace and version information. The templates
+    directory also has keynames that preserve the namespace and version but contain the templates which have been unzipped 
+    from the jar file by a Lambda function.
+1. The path to the unzipped file in the templates directory is what you're referencing when you want to use a published template
+
+#### Version a Component
+
+1. Snapshots are fine for development, you can redeploy as often as needed and downstream users will always pick up the newest
+    version. At the point you want to make your templates available for use by others you'll want to publish a final version
+    so they can be assured the content won't change without them explicitly upgrading the version in their template.
+1. The artifacts3-plugin uses the [Gradle Release Plugin](https://github.com/researchgate/gradle-release) to automate the 
+    release process. The process of cutting a release involves the tagging of the final version in your SCM system so to 
+    do this you'll need to fork or copy and update the example-app repo as you won't have the rights needed to push updates.
+1. The process to cut a release involves checking in and pushing any outstanding changes and then using the `./gradlew release -Pprofile=YOUR_PROFILE_NAME` 
+    command to perform the [steps to cut a release](https://cfn-stacks.com/docs/artifacts3-plugin/latest/index.html#release)
+
 ### Demo Wrap-Up
 
-This demo shows how you can interact with components that have already been created such as the VPC component in the 
-app-main.yaml template. Notice how the version of the component is preserved within the URL so you can be assured it 
-will not change if you're using a release version. The example project itself is still versioned as a SNAPSHOT as seen 
-in the gradle.properties file. Once you have a working component you'd use the [release](https://cfn-stacks.com/docs/artifacts3-plugin/latest/index.html#release) 
-plugin task to create a tagged release version which would be published to your configured [ArtifactS3 repository](https://cfn-stacks.com/docs/artifacts3-repo/latest/index.html).
+This demo covered most of the workflow steps to produce templates and an example application which consumes them. Ensure you've
+terminated any running stacks to release resources at the completion of this demo.
