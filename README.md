@@ -67,8 +67,6 @@ If you find yourself constantly using the same parameter values add a local-conf
 desired values. The file has been .gitignore'd so you wont accidentally check it in to your repo. Any parameters passed 
 from the command line will still override config file values if you need to change them.
 
-----
-
 _local-config.groovy example content_
 
     project.params.with {
