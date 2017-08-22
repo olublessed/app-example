@@ -95,5 +95,5 @@ the app template separately to just create the app within an existing VPC.
 This demo shows how you can interact with components that have already been created such as the VPC component in the 
 app-main.yaml template. Notice how the version of the component is preserved within the URL so you can be assured it 
 will not change if you're using a release version. The example project itself is still versioned as a SNAPSHOT as seen 
-in the gradle.properties file. Once you have a working component you'd use the [release]https://cfn-stacks.com/docs/artifacts3-plugin/latest/index.html#release 
+in the gradle.properties file. Once you have a working component you'd use the [release](https://cfn-stacks.com/docs/artifacts3-plugin/latest/index.html#release) 
 plugin task to create a tagged release version which would be published to your configured [ArtifactS3 repository](https://cfn-stacks.com/docs/artifacts3-repo/latest/index.html).
