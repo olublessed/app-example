@@ -67,7 +67,7 @@ calling updateStack.
 
 If you find yourself constantly using the same parameter values add a local-config.groovy file to the project and add your 
 desired values. The file has been .gitignore'd so you wont accidentally check it in to your repo. Any parameters passed 
-from the command line will override config file values if you need to change them. TO verify the commands you expect 
+from the command line will override config file values if you need to change them. To verify the commands you expect 
 will be sent to a stack you can use the [projectParams](https://cfn-stacks.com/docs/artifacts3-plugin/latest/index.html#projectparams) 
 task to print the parameters to the console
 
