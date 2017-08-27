@@ -58,7 +58,7 @@ Mappings:
   Constants:
     ValueOf:
       VpcTemplateVersion: 'release/com/cfnstacks/cfn-public-only-vpc/0.0.11'
-      AppTemplateVersion: 'release/com/cfnstacks/cfn-app-example/0.0.1'
+      AppTemplateVersion: 'release/com/cfnstacks/app-example/0.0.1'
       TemplateTimeout: 15
 
 Resources:
