@@ -54,18 +54,22 @@ calling updateStack.
 1. Run the Gradle wrapper command along with the createStack or updateStack task and some parameters 
     `./gradlew updateStack -Pprofile=AWS_PROFILE_NAME` would be the minimal amount of parameters and would create 
     the stack named app-example in us-east-2 although those values could be overridden using either a local-config.groovy file
-    or by passing more parameters to the task ex: `./gradlew createStack -Pprofile=AWS_PROFILE_NAME -Pregion=us-west-1 -Pstack=vpc-only -Pinstance=false` 
-    the list of possible params to be set can be seen in the [ext.params section of the build.gradle](build.gradle#L19) file.
+    or by passing more parameters to the task ex: `./gradlew createStack -Pprofile=AWS_PROFILE_NAME -Pregion=us-west-1 -Pzones=us-west-1a,us-west-1b -Pstack=vpc-only -Pinstance=false` 
+    the list of possible params to be set can be seen in the [ext.params section of the build.gradle](build.gradle#L23) file.
 1. The command will return immediately and if you look in the web console you'll see the stack getting provisioned. Unless 
     you changed the instance parameter to true the stack will initially just be a VPC without any instances.
-1. We could re-run the command creating the instance this time `./gradlew updateStack -Pprofile=AWS_PROFILE_NAME -Pinstance=true` 
-    and short thereafter you'll see an EC2 instance created within the VPC
+1. Run the command again, this time setting the instance paramater to true and a web server will be provisioned `./gradlew updateStack -Pprofile=AWS_PROFILE_NAME -Pinstance=true`.
+    The default parameter for allowed IP addresses to access the web server will dynamically query for and set your IP
+    address as the only allowed IP within the security group.
+1. Look in the Outputs tab of either the app or main stack to get a link to view a page from the web server.
 1. Once completed with this test run the `./gradlew deleteStack -Pprofile=AWS_PROFILE_NAME` to terminate all resources 
     prevent the accumulation of charges.
 
 If you find yourself constantly using the same parameter values add a local-config.groovy file to the project and add your 
 desired values. The file has been .gitignore'd so you wont accidentally check it in to your repo. Any parameters passed 
-from the command line will still override config file values if you need to change them.
+from the command line will override config file values if you need to change them. TO verify the commands you expect 
+will be sent to a stack you can use the [projectParams](https://cfn-stacks.com/docs/artifacts3-plugin/latest/index.html#projectparams) 
+task to print the parameters to the console
 
 _local-config.groovy example content_
 
@@ -76,25 +80,26 @@ _local-config.groovy example content_
     
 #### Instance Creation Within an Existing VPC
 
-If you look at the default [app-main.yaml template](src/main/cloudformation/app-main.yaml) it calls two other templates, 
+An inspecection of the [app-main.yaml template](src/main/cloudformation/app-main.yaml) shows that it calls two other templates, 
 the VPC is created from a publicly available template and the application is from the [app.yml](src/main/cloudformation/app.yaml) 
-file from this same project. An output of the VPC template containing a newly created subnet is passed to the application 
-template as a parameter and is used to provision an EC2 instance. We can run just the app.yml file as long as we pass in
-the needed subnet ID parameter.
+file from this same project. Outputs of the VPC template containing a newly created VPC and subnets are passed to the 
+application template as parameters and are used to provision an EC2 instance and create a security group. We can run 
+just the app.yml file as long as we pass in the required parameters.
 
-1. Locate the subnet ID of an existing subnet within a VPC in your account. AWS Console -> VPC -> Subnets and you should 
+1. Locate the VPC and subnet IDs of an existing subnet within a VPC in your account. AWS Console -> VPC -> Subnets and you should 
     see a list of subnets with IDs that look like subnet-11111111. We'll pass this in as an argument to the app.yaml template. 
 1. Run the updateStack task again but with parameters to use a different template and set of stack parameters 
-    `./gradlew updateStack -Pprofile=AWS_PROFILE_NAME -Ptemplate=app.yaml -PstackParamSet=appOnly -Psubnet=SUBNET_ID`
+    `./gradlew updateStack -Pprofile=AWS_PROFILE_NAME -Ptemplate=app.yaml -PstackParamSet=appOnly -Psubnet=SUBNET_ID -PVpcId=VPC_ID -PAllowedIPs=YOUR_IP/32`
 1. Once created we'll test out the [Change Set capability](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html)
     to preview updates before you actually change any resources.
     * Go into the src/main/cloudformation/app.yaml file and change the instance type from a nano to a small `InstanceType: 't2.small'`
-    * Run the `./gradlew createChangeSet -Pprofile=AWS_PROFILE_NAME -Ptemplate=app.yaml -PstackParamSet=appOnly -Psubnet=SUBNET_ID` and then look in the console to [inspect the change set](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets-view.html)
+    * Run the `./gradlew createChangeSet -Pprofile=AWS_PROFILE_NAME -Ptemplate=app.yaml -PstackParamSet=appOnly -Psubnet=SUBNET_ID -Pvpc=VPC_ID -PAllowedIPs=YOUR_IP/32` 
+        and then look in the console to [inspect the change set](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets-view.html)
     * In this case CloudFormation would modify the existing instance by shutting it down and changing the instance type. 
         This would cause a momentary outage but if this is acceptable you could execute the change set to apply the 
-        update or you could discard the change set without affecting any resources. This is a really helpful capability that
+        update or you could discard the change set without affecting any resources. This is a helpful capability that
         aids in understanding the impact of updates before they occur. Every CloudFormation resource has the impact of updates
-        listed at the individual property level. Our example of an [EC2 instance type property update](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-instance.html#cfn-ec2-instance-instancetype) states 
+        listed at the individual property level. The example of an [EC2 instance type property update](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-instance.html#cfn-ec2-instance-instancetype) states 
         that EBS backed instances will require an interruption but the older instance store types would require the full replacement
         of the instance.
 1. Once completed with this test run the `./gradlew deleteStack -Pprofile=AWS_PROFILE_NAME` to terminate all resources 

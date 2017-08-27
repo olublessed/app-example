@@ -3,6 +3,11 @@ Description: Application Example
 
 Parameters:
 
+  AllowedIPs:
+    Description: IP addresses allowed to access the web server on th example instance
+    Type: String
+    Default: ''
+
   AvailabilityZones:
     Description: >-
       List of Availability Zones to use for the subnets in the VPC
@@ -49,13 +54,22 @@ Conditions:
 
   CreateInstance: !Equals [ 'true', !Ref CreateInstance ]
 
+Mappings:
+  Constants:
+    ValueOf:
+      VpcTemplateVersion: 'release/com/cfnstacks/cfn-public-only-vpc/0.0.11'
+      AppTemplateVersion: 'release/com/cfnstacks/cfn-app-example/0.0.1'
+      TemplateTimeout: 15
+
 Resources:
 
   VPC:
     Type: 'AWS::CloudFormation::Stack'
     Properties:
-      TemplateURL: !Sub '${CfnStacksTemplates}/release/com/cfnstacks/cfn-public-only-vpc/0.0.11/public-only-vpc.yaml'
-      TimeoutInMinutes: 15
+      TemplateURL: !Sub
+        - '${CfnStacksTemplates}/${TemplateVersion}/public-only-vpc.yaml'
+        - TemplateVersion: !FindInMap [ Constants, ValueOf, VpcTemplateVersion ]
+      TimeoutInMinutes: !FindInMap [ Constants, ValueOf, TemplateTimeout ]
       Parameters:
         AvailabilityZones: !Ref AvailabilityZones
         VPCCIDR: !Ref VPCCIDR
@@ -65,10 +79,21 @@ Resources:
   App:
     Type: 'AWS::CloudFormation::Stack'
     Properties:
-      TemplateURL: !Sub '${CfnStacksTemplates}/snapshot/com/cfnstacks/app-example/0.0.1-SNAPSHOT/app.yaml'
-      TimeoutInMinutes: 15
+      # @templatePath@ - Is a token that gets replaced by the plugin with the namespace and version of this project
+      # You'll need to run the publish task to see changes but you won't have to update the version string
+      # https://cfn-stacks.com/docs/artifacts3-plugin/latest/index.html#build
+      #TemplateURL: !Sub '${CfnStacksTemplates}/@templatePath@/app.yaml'
+
+      # For this example we're using a release version as snapshots are deleted in the public repo after 30 days
+      # but the example above would be more common in practice
+      TemplateURL: !Sub
+        - '${CfnStacksTemplates}/${TemplateVersion}/app.yaml'
+        - TemplateVersion: !FindInMap [ Constants, ValueOf, AppTemplateVersion ]
+      TimeoutInMinutes: !FindInMap [ Constants, ValueOf, TemplateTimeout ]
       Parameters:
-        InstanceSubnetID: !If [ CreateInstance, !GetAtt VPC.Outputs.PublicSubnet1ID , !Ref 'AWS::NoValue' ]
+        AllowedIPs: !Ref AllowedIPs
+        InstanceSubnetId: !If [ CreateInstance, !GetAtt VPC.Outputs.PublicSubnet1ID , !Ref 'AWS::NoValue' ]
+        VpcId: !GetAtt VPC.Outputs.VPCID
 
 Outputs:
   CfnStacksId:
@@ -77,10 +102,10 @@ Outputs:
   CfnStacksVersion:
     Description: cfn-stacks.com artifact version
     Value: v@version@
-  VpcID:
+  VpcId:
     Description: VPC ID
     Value: !Ref VPC
-  InstanceID:
+  WebServerDnsName:
     Condition: CreateInstance
-    Description: EC2 instance ID
-    Value: !GetAtt App.Outputs.InstanceID
+    Description: WebServer Link
+    Value: !GetAtt App.Outputs.WebServerDnsName

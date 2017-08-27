@@ -3,60 +3,110 @@ Description: Application Example
 
 Parameters:
 
-  InstanceSubnetID:
+  AllowedIPs:
+    Description: IP addresses allowed to access the web server on th example instance
+    Type: String
+    Default: ''
+
+  InstanceSubnetId:
     Description: Subnet ID in which to build the instance. Empty string will prevent launch
+    Type: String
+    Default: ''
+
+  VpcId:
+    Description: VPC ID
     Type: String
     Default: ''
 
 Conditions:
 
-  CreateInstance: !Not [ !Equals [ '', !Ref InstanceSubnetID ] ]
+  CreateInstance: !Not [ !Equals [ '', !Ref InstanceSubnetId ] ]
 
 Resources:
 
-  Instance:
+  WebServer:
     Type: 'AWS::EC2::Instance'
     Condition: CreateInstance
     Properties:
       InstanceType: 't2.nano'
       ImageId: !FindInMap [ AWSAMIRegionMap, !Ref 'AWS::Region', AMZNLINUXHVM ]
-      SubnetId: !Ref InstanceSubnetID
+      SubnetId: !Ref InstanceSubnetId
+      SecurityGroupIds:
+        - !Ref WebServerSecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          #!/usr/bin/env bash
+          yum -y update
+          /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WebServer --region ${AWS::Region}
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          packages:
+            yum:
+              httpd: []
+          files:
+            '/var/www/html/index.html':
+              content: !Sub |
+                <html>
+                  <title></title>
+                  <body>
+                    <h3>cfn-stacks.com example application page</h3>
+                    Access allowed from ${AllowedIPs}
+                  </body>
+                </html>
+          services:
+            sysvinit:
+              httpd:
+                enabled: true
+                ensureRunning: true
+
+  WebServerSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Condition: CreateInstance
+    Properties:
+      GroupDescription: Web Server Restricted Access
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: !Ref AllowedIPs
 
 Mappings:
 
   AWSAMIRegionMap:
     AMI:
-      AMZNLINUXHVM: amzn-ami-hvm-2017.03.1.20170623-x86_64-gp2
+      AMZNLINUXHVM: amzn-ami-hvm-2017.03.1.20170812-x86_64-gp2
     ap-northeast-1:
-      AMZNLINUXHVM: ami-3bd3c45c
+      AMZNLINUXHVM: ami-4af5022c
     ap-northeast-2:
-      AMZNLINUXHVM: ami-e21cc38c
+      AMZNLINUXHVM: ami-8663bae8
     ap-south-1:
-      AMZNLINUXHVM: ami-47205e28
+      AMZNLINUXHVM: ami-d7abd1b8
     ap-southeast-1:
-      AMZNLINUXHVM: ami-77af2014
+      AMZNLINUXHVM: ami-fdb8229e
     ap-southeast-2:
-      AMZNLINUXHVM: ami-10918173
+      AMZNLINUXHVM: ami-30041c53
     ca-central-1:
-      AMZNLINUXHVM: ami-a7aa15c3
+      AMZNLINUXHVM: ami-5ac17f3e
     eu-central-1:
-      AMZNLINUXHVM: ami-82be18ed
+      AMZNLINUXHVM: ami-657bd20a
     eu-west-1:
-      AMZNLINUXHVM: ami-d7b9a2b1
+      AMZNLINUXHVM: ami-ebd02392
     eu-west-2:
-      AMZNLINUXHVM: ami-ed100689
+      AMZNLINUXHVM: ami-489f8e2c
     sa-east-1:
-      AMZNLINUXHVM: ami-87dab1eb
+      AMZNLINUXHVM: ami-d27203be
     us-east-1:
-      AMZNLINUXHVM: ami-a4c7edb2
+      AMZNLINUXHVM: ami-4fffc834
     us-east-2:
-      AMZNLINUXHVM: ami-8a7859ef
+      AMZNLINUXHVM: ami-ea87a78f
     us-gov-west-1:
       AMZNLINUXHVM: ami-ffa61d9e
     us-west-1:
-      AMZNLINUXHVM: ami-327f5352
+      AMZNLINUXHVM: ami-3a674d5a
     us-west-2:
-      AMZNLINUXHVM: ami-6df1e514
+      AMZNLINUXHVM: ami-aa5ebdd2
 
 Outputs:
   CfnStacksId:
@@ -65,7 +115,7 @@ Outputs:
   CfnStacksVersion:
     Description: cfn-stacks.com artifact version
     Value: v@version@
-  InstanceID:
+  WebServerDnsName:
     Condition: CreateInstance
-    Description: EC2 instance ID
-    Value: !Ref Instance
+    Description: WebServer Link
+    Value: !Sub 'http://${WebServer.PublicDnsName}'
