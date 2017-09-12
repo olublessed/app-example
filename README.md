@@ -149,4 +149,4 @@ and run the command listed in the [deployment docs](https://cfn-stacks.com/docs/
 
 This demo covered most of the workflow steps to produce templates and an example application which consumes them. Ensure you've
 terminated any running stacks to release resources at the completion of this demo. You'll need to manually delete the S3 bucket
-as buckets with content cannot be deleted automatically by CloudForamtion.
+as buckets with content cannot be deleted automatically by CloudFormation.
