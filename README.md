@@ -89,7 +89,7 @@ just the app.yml file as long as we pass in the required parameters.
 1. Locate the VPC and subnet IDs of an existing subnet within a VPC in your account. AWS Console -> VPC -> Subnets and you should 
     see a list of subnets with IDs that look like subnet-11111111. We'll pass this in as an argument to the app.yaml template. 
 1. Run the updateStack task again but with parameters to use a different template and set of stack parameters 
-    `./gradlew updateStack -Pprofile=AWS_PROFILE_NAME -Ptemplate=app.yaml -PstackParamSet=appOnly -Psubnet=SUBNET_ID -PVpcId=VPC_ID -PAllowedIPs=YOUR_IP/32`
+    `./gradlew updateStack -Pprofile=AWS_PROFILE_NAME -Ptemplate=app.yaml -PstackParamSet=appOnly -Psubnet=SUBNET_ID -Pvpc=VPC_ID -PAllowedIPs=YOUR_IP/32`
 1. Once created we'll test out the [Change Set capability](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html)
     to preview updates before you actually change any resources.
     * Go into the src/main/cloudformation/app.yaml file and change the instance type from a nano to a small `InstanceType: 't2.small'`
