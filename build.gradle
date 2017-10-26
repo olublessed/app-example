@@ -1,7 +1,7 @@
 // Apply the ArtifactS3 plugin the project
 // This plugin is enables a number of other plugins creating a template workflow (test->publish->deploy->update)
 plugins {
-    id 'com.cfnstacks.gradle.artifacts3' version '0.2.2'
+    id 'com.cfnstacks.gradle.artifacts3' version '0.2.4'
 }
 
 // Project namespace and description
